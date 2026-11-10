@@ -11,4 +11,7 @@ public class PlombaApplication {
 		SpringApplication.run(PlombaApplication.class, args);
 	}
 
+	public static boolean isWorking() {
+		return true;
+	}
 }
