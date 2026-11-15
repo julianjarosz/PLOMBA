@@ -48,12 +48,5 @@ pipeline {
             // Built app (.jar) to download
             archiveArtifacts artifacts: "${PROJECT_DIR}/target/*.jar", allowEmptyArchive: true, fingerprint: true
         }
-                }
-            }
-        }
-        success {
-            // build app (.jar) to download
-                archiveArtifacts artifacts: "${PROJECT_DIR}/target/*.jar", allowEmptyArchive: true, fingerprint: true
-        }
     }
 }
