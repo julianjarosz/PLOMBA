@@ -13,6 +13,7 @@ pipeline {
 
     environment {
         PROJECT_DIR = 'PLOMBA/plomba'
+        NEXUS_URL = 'http://nexus:8081'
     }
 
     stages {
@@ -24,7 +25,18 @@ pipeline {
         stage('Build and test') {
             steps {
                 dir("${PROJECT_DIR}") {
-                    sh 'mvn -B clean verify'
+                    sh 'mvn -B -s "$WORKSPACE/maven-settings.xml" clean verify'
+                }
+            }
+        }
+        stage('Deploy to Nexus') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus-creds',
+                                                  usernameVariable: 'NEXUS_USERNAME',
+                                                  passwordVariable: 'NEXUS_PASSWORD')]) {
+                    dir("${PROJECT_DIR}") {
+                        sh 'mvn -B -s "$WORKSPACE/maven-settings.xml" deploy -DskipTests'
+                    }
                 }
             }
         }
