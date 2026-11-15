@@ -22,6 +22,13 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Check formatting') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    sh 'mvn -B -s "$WORKSPACE/maven-settings.xml" spotless:check'
+                }
+            }
+        }
         stage('Build and test') {
             steps {
                 dir("${PROJECT_DIR}") {
