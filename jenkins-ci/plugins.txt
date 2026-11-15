@@ -1,0 +1,8 @@
+workflow-aggregator
+git
+github-branch-source
+junit
+coverage
+adoptopenjdk
+timestamper
+pipeline-stage-view
