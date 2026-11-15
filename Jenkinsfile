@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     tools {
-        maven 'maven-3'
         jdk 'jdk-25'
     }
 
@@ -12,10 +11,11 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build and test') {
+        stage('Format check, build and test') {
             steps {
                 dir('PLOMBA/plomba') {
-                    sh 'mvn -B clean verify'
+                    // verify includes the Spotless check configured in pom.xml.
+                    sh 'sh mvnw -B clean verify'
                 }
             }
         }
