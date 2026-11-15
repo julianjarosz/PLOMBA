@@ -3,3 +3,5 @@
 !.env.example
 .secrets/
 __pycache__/
+.idea/
+jenkins-ci/.env

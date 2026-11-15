@@ -1,0 +1,83 @@
+# Jenkins Configuration as Code (JCasC)
+
+jenkins:
+  systemMessage: "PLOMBA CI - configured by Jenkins Configuration as Code (jenkins/casc.yaml)"
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+unclassified:
+  location:
+    url: "http://localhost:8082/"
+
+tool:
+  jdk:
+    installations:
+      - name: "jdk-25"
+        properties:
+          - installSource:
+              installers:
+                - adoptOpenJdkInstaller:
+                    id: "jdk-25.0.5+8"
+  maven:
+    installations:
+      - name: "maven-3"
+        properties:
+          - installSource:
+              installers:
+                - maven:
+                    id: "3.10.0"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-creds"
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+              description: "GitHub token"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "nexus-creds"
+              username: "jenkins"
+              password: "${NEXUS_JENKINS_PASSWORD}"
+              description: "Nexus deploy user"
+
+jobs:
+  - script: >
+      pipelineJob('plomba-pipeline') {
+        description('CI pipeline for PLOMBA - defined in jenkins/casc.yaml')
+        properties {
+          pipelineTriggers {
+            triggers {
+              pollSCM {
+                scmpoll_spec('H/5 * * * *')
+              }
+            }
+          }
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/julianjarosz/PLOMBA.git')
+                  credentials('github-creds')
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+      }

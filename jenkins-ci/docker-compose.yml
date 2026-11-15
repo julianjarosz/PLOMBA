@@ -8,8 +8,12 @@ services:
     ports:
       - "127.0.0.1:8082:8080"
       - "50000:50000"   # port for agents
+    env_file:
+      - .env
     volumes:
       - jenkins_home:/var/jenkins_home
+      # Jenkins configuration as code
+      - ./casc.yaml:/var/jenkins_casc/casc.yaml:ro
 
 volumes:
   jenkins_home:

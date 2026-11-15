@@ -1,8 +1,12 @@
+configuration-as-code
+job-dsl
 workflow-aggregator
+pipeline-graph-view
+pipeline-stage-view
 git
 github-branch-source
+credentials-binding
 junit
 coverage
 adoptopenjdk
 timestamper
-pipeline-stage-view
