@@ -12,9 +12,11 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build i testy') {
+        stage('Build and test') {
             steps {
-                sh 'mvn -B clean verify'
+                dir('PLOMBA/plomba') {
+                    sh 'mvn -B clean verify'
+                }
             }
         }
     }
