@@ -78,15 +78,15 @@ docker compose -f nexus/compose.yaml stop
 ## Starting Jenkins
 Jenkins is configured in code:
 
-- jenkins/plugins.txt - installed plugins,
-- jenkins/casc.yaml - admin account, tools (jdk-25, maven-3), credentials (github-creds, nexus-creds) and the plomba-pipeline job,
-- jenkins/.env - your passwords and tokens (not in the repository).
+- jenkins-ci/plugins.txt - installed plugins,
+- jenkins-ci/casc.yaml - admin account, tools (jdk-25, maven-3), credentials (github-creds, nexus-creds) and the plomba-pipeline job,
+- jenkins-ci/.env - your passwords and tokens (not in the repository).
 
 Start Nexus first, because the pipeline downloads libraries from it and publishes the application to it.
 
 On the first run, create your .env file from the template and fill in the values:
 ```bash
-cp jenkins-ci/.env.example jenkins-ci/.env
+cp jenkins-ci/env.example jenkins-ci/.env
 ```
 
 You need a classic GitHub token with the public_repo and repo:status scopes, and the password of the jenkins user in Nexus.
@@ -97,7 +97,7 @@ docker compose -f jenkins-ci/docker-compose.yml up -d --build
 ```
 
 The dashboard is available at http://localhost:8082.
-Log in with JENKINS_ADMIN_ID and JENKINS_ADMIN_PASSWORD from jenkins/.env. The plomba-pipeline job is already there.
+Log in with JENKINS_ADMIN_ID and JENKINS_ADMIN_PASSWORD from jenkins-ci/.env. The plomba-pipeline job is already there.
 Jenkins data is persisted in the jenkins-ci_jenkins_home volume.
 
 The pipeline:

@@ -7,7 +7,6 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8082:8080"
-      - "50000:50000"   # port for agents
     env_file:
       - .env
     volumes:

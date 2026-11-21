@@ -1,7 +1,7 @@
 # Jenkins Configuration as Code (JCasC)
 
 jenkins:
-  systemMessage: "PLOMBA CI - configured by Jenkins Configuration as Code (jenkins/casc.yaml)"
+  systemMessage: "PLOMBA CI - configured by Jenkins Configuration as Code (jenkins-ci/casc.yaml)"
   numExecutors: 2
   securityRealm:
     local:
@@ -55,7 +55,7 @@ credentials:
 jobs:
   - script: >
       pipelineJob('plomba-pipeline') {
-        description('CI pipeline for PLOMBA - defined in jenkins/casc.yaml')
+        description('CI pipeline for PLOMBA - defined in jenkins-ci/casc.yaml')
         properties {
           pipelineTriggers {
             triggers {
