@@ -105,3 +105,51 @@ The pipeline:
 1. Check formatting – runs spotless:check and stops the build if the code is not formatted.
 2. Build and test – builds the application with JDK 25 and runs the tests. Test results and JaCoCo coverage are shown in Jenkins.
 3. Deploy to Nexus – publishes the .jar file to the maven-snapshots repository.
+
+
+## Daily workflow
+
+### Step 1: Start the VM before work
+Sign in with your student account (`<index>@pw.edu.pl`) using one of the options below:
+
+- **In the browser (Azure Portal):**
+  1. Open https://portal.azure.com and sign in with your `@pw.edu.pl` account.
+  2. Go to **Virtual machines** → **`plomba-vm`**.
+  3. Click **Start** on the top bar.
+  4. Wait 2–3 minutes for the Docker containers to start (Nexus takes the longest).
+
+- **In the terminal (Azure CLI — optional):**
+  ```bash
+  az login
+  az vm start -g plomba-rg -n plomba-vm
+  ```
+
+### Step 2: Open an SSH tunnel to Nexus and Jenkins
+For security reasons, Nexus and Jenkins are not exposed to the internet. Connect to them through an SSH tunnel:
+
+1. Run in your terminal:
+   ```bash
+   ssh -N -L 8081:localhost:8081 -L 8082:localhost:8082 plomba-vm
+   ```
+   *(The command produces no output and stays running — keep this terminal window open while working).*
+2. While the tunnel is open, access the services locally at:
+   - **Nexus:** http://localhost:8081
+   - **Jenkins:** http://localhost:8082
+3. Build the application locally using the shared Nexus server (from the repository root):
+   ```bash
+   export NEXUS_URL=http://localhost:8081
+   cd PLOMBA/plomba
+   sh mvnw -s ../../maven-settings.xml clean verify
+   ```
+
+### Step 3: Stop the VM after work (IMPORTANT!)
+Before stopping the VM, ask in the team chat whether anyone else is still working. If no one is using it:
+
+1. Close the SSH tunnel (`Ctrl+C` in the terminal).
+2. Deallocate the VM to stop billing:
+   - **In Azure Portal:** open **`plomba-vm`** → click **Stop** → confirm. Verify that the status changes to **`Stopped (deallocated)`**.
+   - **In the terminal (Azure CLI):**
+     ```bash
+     az vm deallocate -g plomba-rg -n plomba-vm
+     ```
+   *(Warning: never use `az vm stop` or `sudo shutdown` inside the VM, because Azure keeps the compute allocation and continues charging credits. Always use the **Stop** button in Azure Portal or `az vm deallocate`).*
