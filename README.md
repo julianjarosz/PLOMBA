@@ -12,7 +12,70 @@ The hook formats the staged files. If you staged only part of a file, it will as
 
 The Maven Wrapper in the repository downloads Maven 3.10.0.
 
-## Docker network
+## Daily workflow
+
+### Step 1: Start the VM before work
+Sign in with your student account (`<index>@pw.edu.pl`) using one of the options below:
+
+- **In the browser (Azure Portal):**
+  1. Open https://portal.azure.com and sign in with your `@pw.edu.pl` account.
+  2. Go to **Virtual machines** → **`plomba-vm`**.
+  3. Click **Start** on the top bar.
+  4. Wait 2–3 minutes for the Docker containers to start (Nexus takes the longest).
+
+- **In the terminal (Azure CLI — optional):**
+  ```bash
+  az login
+  az vm start -g plomba-rg -n plomba-vm
+  ```
+
+### Step 2: Open an SSH tunnel to Nexus and Jenkins
+For security reasons, Nexus and Jenkins are not exposed to the internet. Connect to them through an SSH tunnel:
+
+1. Run in your terminal:
+   ```bash
+   ssh -N -L 8081:localhost:8081 -L 8082:localhost:8082 plomba-vm
+   ```
+   *(The command produces no output and stays running — keep this terminal window open while working).*
+2. While the tunnel is open, access the services locally at:
+   - **Nexus:** http://localhost:8081
+   - **Jenkins:** http://localhost:8082
+
+### Step 3: Build and run the application locally
+
+From the repository root:
+
+```bash
+export NEXUS_URL=http://localhost:8081
+cd PLOMBA/plomba
+sh mvnw -s ../../maven-settings.xml clean verify
+java -jar target/plomba-0.0.1-SNAPSHOT.jar
+```
+
+`clean verify` builds the application and runs the tests. The shared `maven-settings.xml` file routes library downloads through Nexus (`localhost:8081` over the SSH tunnel).
+
+Once the application is running, check <http://localhost:8080/hello>.
+Stop the application with `Ctrl+C`.
+
+### Step 4: Stop the VM after work (IMPORTANT!)
+Before stopping the VM, ask in the team chat whether anyone else is still working. If no one is using it:
+
+1. Close the SSH tunnel (`Ctrl+C` in the terminal).
+2. Deallocate the VM to stop billing:
+   - **In Azure Portal:** open **`plomba-vm`** → click **Stop** → confirm. Verify that the status changes to **`Stopped (deallocated)`**.
+   - **In the terminal (Azure CLI):**
+     ```bash
+     az vm deallocate -g plomba-rg -n plomba-vm
+     ```
+   *(Warning: never use `az vm stop` or `sudo shutdown` inside the VM, because Azure keeps the compute allocation and continues charging credits. Always use the **Stop** button in Azure Portal or `az vm deallocate`).*
+
+---
+
+## Server setup (admin / initial provisioning on Azure VM)
+
+The steps below are already completed on the shared Azure VM (`plomba-vm`). Run them only when provisioning a new server instance from scratch.
+
+### Docker network
 
 Jenkins and Nexus run in separate containers and communicate over a shared Docker network.
 Create it once, before starting either of them:
@@ -21,7 +84,7 @@ Create it once, before starting either of them:
 docker network create plomba-ci
 ```
 
-## Starting Nexus
+### Starting Nexus
 
 From the repository root:
 
@@ -42,7 +105,13 @@ Log in as `admin`, complete the setup wizard, change the password, and enable an
 Check that the `maven-public` group contains `maven-central`, `maven-snapshots`, and `maven-releases`.
 Nexus data is persisted in the `nexus-data` volume.
 
-## Deploy user for Jenkins
+Stop Nexus from the repository root:
+
+```bash
+docker compose -f nexus/compose.yaml stop
+```
+
+### Deploy user for Jenkins
 
 Jenkins publishes the built application to Nexus with a dedicated user, not with admin.
 In Settings → Security:
@@ -52,30 +121,7 @@ In Settings → Security:
     - nx-repository-view-maven2-maven-snapshots-add, -edit, -read, -browse
 2. Users → Create local user, ID jenkins, status Active, role plomba-deployer.
 
-## Building and running the application
-
-From the repository root:
-
-```bash
-export NEXUS_URL=http://localhost:8081
-cd PLOMBA/plomba
-sh mvnw -s ../../maven-settings.xml clean verify
-java -jar target/plomba-0.0.1-SNAPSHOT.jar
-```
-
-`clean verify` builds the application and runs the tests. The shared `maven-settings.xml` file routes library downloads through Nexus.
-If you use a shared Nexus server, set its address in `NEXUS_URL` instead of `localhost`.
-
-Once the application is running, check <http://localhost:8080/hello>.
-Stop the application with `Ctrl+C`.
-
-Stop Nexus from the repository root:
-
-```bash
-docker compose -f nexus/compose.yaml stop
-```
-
-## Starting Jenkins
+### Starting Jenkins
 Jenkins is configured in code:
 
 - jenkins-ci/plugins.txt - installed plugins,
@@ -105,51 +151,3 @@ The pipeline:
 1. Check formatting – runs spotless:check and stops the build if the code is not formatted.
 2. Build and test – builds the application with JDK 25 and runs the tests. Test results and JaCoCo coverage are shown in Jenkins.
 3. Deploy to Nexus – publishes the .jar file to the maven-snapshots repository.
-
-
-## Daily workflow
-
-### Step 1: Start the VM before work
-Sign in with your student account (`<index>@pw.edu.pl`) using one of the options below:
-
-- **In the browser (Azure Portal):**
-  1. Open https://portal.azure.com and sign in with your `@pw.edu.pl` account.
-  2. Go to **Virtual machines** → **`plomba-vm`**.
-  3. Click **Start** on the top bar.
-  4. Wait 2–3 minutes for the Docker containers to start (Nexus takes the longest).
-
-- **In the terminal (Azure CLI — optional):**
-  ```bash
-  az login
-  az vm start -g plomba-rg -n plomba-vm
-  ```
-
-### Step 2: Open an SSH tunnel to Nexus and Jenkins
-For security reasons, Nexus and Jenkins are not exposed to the internet. Connect to them through an SSH tunnel:
-
-1. Run in your terminal:
-   ```bash
-   ssh -N -L 8081:localhost:8081 -L 8082:localhost:8082 plomba-vm
-   ```
-   *(The command produces no output and stays running — keep this terminal window open while working).*
-2. While the tunnel is open, access the services locally at:
-   - **Nexus:** http://localhost:8081
-   - **Jenkins:** http://localhost:8082
-3. Build the application locally using the shared Nexus server (from the repository root):
-   ```bash
-   export NEXUS_URL=http://localhost:8081
-   cd PLOMBA/plomba
-   sh mvnw -s ../../maven-settings.xml clean verify
-   ```
-
-### Step 3: Stop the VM after work (IMPORTANT!)
-Before stopping the VM, ask in the team chat whether anyone else is still working. If no one is using it:
-
-1. Close the SSH tunnel (`Ctrl+C` in the terminal).
-2. Deallocate the VM to stop billing:
-   - **In Azure Portal:** open **`plomba-vm`** → click **Stop** → confirm. Verify that the status changes to **`Stopped (deallocated)`**.
-   - **In the terminal (Azure CLI):**
-     ```bash
-     az vm deallocate -g plomba-rg -n plomba-vm
-     ```
-   *(Warning: never use `az vm stop` or `sudo shutdown` inside the VM, because Azure keeps the compute allocation and continues charging credits. Always use the **Stop** button in Azure Portal or `az vm deallocate`).*
